@@ -92,6 +92,32 @@ class TitanParser(CnvParser):
         return cn_regions
 
 
+class FacetsParser(CnvParser):
+    def __init__(self, fc_filename, cellularity):
+        self._fc_filename = fc_filename
+        self._cellularity = cellularity
+
+    def parse(self):
+        cn_regions = defaultdict(list)
+
+        with open(self._fc_filename) as facetf:
+            reader = csv.DictReader(facetf)
+            for record in reader:
+                cnv = {}
+                cnv["cellular_prevalence"] = float(record["cf.em"])
+                if str.isdigit(record["mcn"]) and str.isdigit(record["lcn.em"]):
+                    cnv["major_cn"] = int(record["mcn"])
+                    cnv["minor_cn"] = int(record["lcn.em"])
+                    chrom = record["chrom"]
+                    cnv["start"] = int(record["start"])
+                    cnv["end"] = int(float(record["end"]))
+                    cn_regions[chrom].append(cnv)
+                else:
+                    next
+
+        return cn_regions
+
+
 class BattenbergParser(CnvParser):
     def __init__(self, bb_filename, cellularity):
         self._bb_filename = bb_filename
@@ -225,6 +251,8 @@ def main():
         parser = BattenbergSmchetParser(args.cnv_file, cellularity)
     elif args.input_type == "titan":
         parser = TitanParser(args.cnv_file, cellularity)
+    elif args.input_type == "facets":
+        parser = FacetsParser(args.cnv_file, cellularity)
     else:
         raise Exception("Unknown input type")
 
