@@ -206,12 +206,10 @@ class StrelkaParser(VariantParser):
         self._tumor_sample = tumor_sample
 
     def _does_variant_pass_filters(self, variant):
-        # Strelka outputs two files one for SNPs, the other for InDels
-        # For now only deal with SNP file from Strelka
-        if variant.is_snp:
-            if variant.FILTER is None or len(variant.FILTER) == 0:
-                return True
-        return False
+        if len(variant.REF) != 1 or len(variant.ALT) != 1:
+            return False
+        else:
+            return super()._does_variant_pass_filters(self, variant)
 
     def _calc_read_counts(self, variant):
         alt = variant.ALT[0]
