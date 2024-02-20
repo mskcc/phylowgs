@@ -215,7 +215,7 @@ def main():
         "--cnv-format",
         dest="input_type",
         required=True,
-        choices=("battenberg", "battenberg-smchet", "titan"),
+        choices=("battenberg", "battenberg-smchet", "titan", "facets"),
         help="Type of CNV input",
     )
     parser.add_argument(
