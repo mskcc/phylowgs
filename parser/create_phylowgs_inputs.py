@@ -57,6 +57,8 @@ class VariantParser(object):
     def _does_variant_pass_filters(self, variant):
         if variant.FILTER is None:
             return True
+        if variant.FILTER == "PASS":
+            return True
         if len(variant.FILTER) > 0:
             # Variant failed one or more filters.
             return False
