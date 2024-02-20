@@ -101,7 +101,7 @@ class FacetsParser(CnvParser):
         cn_regions = defaultdict(list)
 
         with open(self._fc_filename) as facetf:
-            reader = csv.DictReader(facetf)
+            reader = csv.DictReader(facetf, dialect="excel-tab")
             for record in reader:
                 cnv = {}
                 cnv["cellular_prevalence"] = float(record["cf.em"])
