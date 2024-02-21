@@ -1,7 +1,7 @@
 FROM python:2.7
 
 LABEL maintainer="Nikhil Kumar (kumarn1@mskcc.org)" \
-      version.phylowgs="v1.0-msk" \
+      version.phylowgs="v1.2-msk" \
       version.python="2.7" \
       source.phylowgs="https://github.com/mskcc/phylowgs"
 
