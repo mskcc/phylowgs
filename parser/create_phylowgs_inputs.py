@@ -209,7 +209,9 @@ class StrelkaParser(VariantParser):
         if len(variant.REF) != 1 or len(variant.ALT[0]) != 1:
             return False
         else:
-            return super()._does_variant_pass_filters(self, variant)
+            super_filter = super(StrelkaParser, self)
+            super_filter.__init__()
+            return super_filter._does_variant_pass_filters(variant)
 
     def _calc_read_counts(self, variant):
         alt = variant.ALT[0]
