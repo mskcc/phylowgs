@@ -206,7 +206,7 @@ class StrelkaParser(VariantParser):
         self._tumor_sample = tumor_sample
 
     def _does_variant_pass_filters(self, variant):
-        if len(variant.REF) != 1 or len(variant.ALT) != 1:
+        if len(variant.REF) != 1 or len(variant.ALT[0]) != 1:
             return False
         else:
             return super()._does_variant_pass_filters(self, variant)
