@@ -109,8 +109,8 @@ class FacetsParser(CnvParser):
                     cnv["major_cn"] = int(record["mcn"])
                     cnv["minor_cn"] = int(record["lcn.em"])
                     chrom = record["chrom"]
-                    cnv["start"] = int(record["start"])
-                    cnv["end"] = int(float(record["end"]))
+                    cnv["start"] = int(record["gene_start"])
+                    cnv["end"] = int(float(record["gene_end"]))
                     cn_regions[chrom].append(cnv)
                 else:
                     next
