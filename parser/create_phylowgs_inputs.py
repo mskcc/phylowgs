@@ -669,7 +669,7 @@ class Segmenter(object):
                     interval = (prev_pos, locus)
                     if interval[1] - interval[0] > min_size_for_inclusion:
                         intervals[chrom].append(
-                            (interval[0], interval[1], sorted(open_samples))
+                            (interval[0], interval[1], sorted(list(set(open_samples))))
                         )
                 else:
                     # All points should be start points.
