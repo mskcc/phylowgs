@@ -20,6 +20,28 @@ class ReadCountsUnavailableError(Exception):
     pass
 
 
+class MafVariant(object):
+    def __init__(
+        self, chromosome, position, filter, t_ref, t_alt, ref_allele, alt_allele
+    ):
+        self.CHROM = chromosome
+        self.POS = position
+        self.FILTER = filter
+        self.T_REF = t_ref
+        self.T_ALT = t_alt
+        self.REF = ref_allele
+        self.ALT = alt_allele
+        self.ID = self.generate_id()
+
+    def generate_id(self):
+        if self.REF == "-":
+            self.REF = "I"
+        if self.ALT == "-":
+            self.ALT = "D"
+        id = "{}_{}_{}_{}".format(self.CHROM, self.POS, self.REF, self.ALT)
+        return id
+
+
 class VariantParser(object):
     def __init__(self):
         # Child classes must give the following variables sensible values in
@@ -285,6 +307,55 @@ class MutectSmchetParser(VariantParser):
         total_reads = ref_reads + variant_reads
 
         return (ref_reads, total_reads)
+
+
+class MafParser(MutectSmchetParser):
+
+    def _calc_read_counts(self, variant):
+        total_reads = variant.T_REF + variant.T_ALT
+        return (variant.T_REF, total_reads)
+
+    def _does_variant_pass_filters(self, variant):
+        if variant.FILTER and variant.FILTER == "TRUE":
+            return False
+        return True
+
+    def _parse_maf(self, maf_filename):
+        variant_list = []
+        with open(maf_filename) as maf_file:
+            for single_line in csv.DictReader(maf_file, dialect="excel-tab"):
+                chrom = single_line["Chromosome"]
+                variant_type = single_line["Variant_Type"]
+                start = int(single_line["Start_Position"])
+                filter = single_line["FILTER"]
+                ref_reads = int(single_line["t_ref_count"])
+                variant_reads = int(single_line["t_alt_count"])
+                ref_allele = single_line["Reference_Allele"]
+                alt_allele = single_line["Tumor_Seq_Allele2"]
+                pos = start
+                if variant_type == "DEL":
+                    pos = pos - 1
+                variant = MafVariant(
+                    chrom, pos, filter, ref_reads, variant_reads, ref_allele, alt_allele
+                )
+                variant_list.append(variant)
+        return variant_list
+
+    def _filter(self, maf_filename):
+        variants = []
+
+        all_variants = self._parse_maf(maf_filename)
+
+        for variant in all_variants:
+            if not is_good_chrom(variant.CHROM):
+                continue
+            if not self._does_variant_pass_filters(variant):
+                continue
+            variants.append(variant)
+        return variants
+
+    def _parse_vcf(self, maf_filename):
+        self._parse_maf(maf_filename)
 
 
 class VarDictParser(MutectSmchetParser):
@@ -1466,6 +1537,7 @@ def main():
             "strelka",
             "vardict",
             "pcawg_consensus",
+            "maf",
         )
     )
 
