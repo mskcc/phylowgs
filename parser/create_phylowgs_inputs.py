@@ -13,7 +13,7 @@ import numpy.ma as ma
 import json
 from scipy.stats.mstats import gmean
 
-VariantId = namedtuple("VariantId", ["CHROM", "POS"])
+VariantId = namedtuple("VariantId", ["CHROM", "POS", "ID"])
 
 
 class ReadCountsUnavailableError(Exception):
@@ -630,7 +630,7 @@ def chrom_key(chrom):
 
 def variant_key(var):
     chrom = chrom_key(var.CHROM)
-    return (chrom, var.POS)
+    return (chrom, var.POS, None)
 
 
 class Segmenter(object):
@@ -1427,13 +1427,28 @@ def parse_variants(
             variant_parser = PcawgConsensusParser(vcf_fn, tumor_sample)
         elif vcf_type == "somsnip":
             variant_parser = SomSnipParser(vcf_fn, tumor_sample)
+        elif vcf_type == "maf":
+            variant_parser = MafParser(vcf_fn, tumor_sample)
         else:
             raise Exception("Unknowon variant type: %s" % vcf_type)
 
         parsed_variants.append(variant_parser.list_variants())
-        variant_ids = [
-            VariantId(str(v[0].CHROM), int(v[0].POS)) for v in parsed_variants[-1]
-        ]
+        variant_ids = []
+        for single_variant in parsed_variants[-1]:
+            if hasattr(single_variant[0], "ID"):
+                variant_ids.append(
+                    VariantId(
+                        str(single_variant[0].CHROM),
+                        int(single_variant[0].POS),
+                        single_variant[0].ID,
+                    )
+                )
+            else:
+                variant_ids.append(
+                    VariantId(
+                        str(single_variant[0].CHROM), int(single_variant[0].POS), None
+                    )
+                )
         all_variant_ids += variant_ids
 
     all_variant_ids = list(set(all_variant_ids))  # Eliminate duplicates.
@@ -1447,7 +1462,10 @@ def parse_variants(
 
     for sample_idx, parsed in enumerate(parsed_variants):
         for variant, ref_reads, total_reads in parsed:
-            variant_id = VariantId(str(variant.CHROM), int(variant.POS))
+            if hasattr(variant, "ID"):
+                variant_id = VariantId(str(variant.CHROM), int(variant.POS), variant.ID)
+            else:
+                variant_id = VariantId(str(variant.CHROM), int(variant.POS), None)
             variant_idx = variant_positions[variant_id]
             ref_read_counts[variant_idx, sample_idx] = ref_reads
             total_read_counts[variant_idx, sample_idx] = total_reads
