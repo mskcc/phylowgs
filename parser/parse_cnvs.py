@@ -95,7 +95,7 @@ class TitanParser(CnvParser):
 class FacetsParser(CnvParser):
     def __init__(self, fc_filename, cellularity):
         self._fc_filename = fc_filename
-        if cellularity > 0:
+        if cellularity < 1:
             self._cellularity = cellularity
         else:
             self.calc_cellularity()
@@ -248,7 +248,8 @@ def main():
         "--cellularity",
         dest="cellularity",
         type=float,
-        required=True,
+        required=False,
+        default=1,
         help="Fraction of sample that is cancerous rather than somatic. Used only for estimating CNV confidence -- if no CNVs, need not specify argument.",
     )
     parser.add_argument(
