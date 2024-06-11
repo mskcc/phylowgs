@@ -95,7 +95,23 @@ class TitanParser(CnvParser):
 class FacetsParser(CnvParser):
     def __init__(self, fc_filename, cellularity):
         self._fc_filename = fc_filename
-        self._cellularity = cellularity
+        if cellularity > 0:
+            self._cellularity = cellularity
+        else:
+            self.calc_cellularity()
+
+    def calc_cellularity(self):
+        max_cellularity = 0
+        with open(self._fc_filename) as facetf:
+            reader = csv.DictReader(facetf, dialect="excel-tab")
+            for record in reader:
+                cellularity = float(record["cf.em"])
+                if cellularity < 1:
+                    max_cellularity = max(max_cellularity, cellularity)
+        if max_cellularity > 0:
+            self._cellularity = max_cellularity
+        else:
+            self._cellularity = 1
 
     def parse(self):
         cn_regions = defaultdict(list)
@@ -104,13 +120,22 @@ class FacetsParser(CnvParser):
             reader = csv.DictReader(facetf, dialect="excel-tab")
             for record in reader:
                 cnv = {}
-                cnv["cellular_prevalence"] = float(record["cf.em"])
-                if str.isdigit(record["mcn"]) and str.isdigit(record["lcn.em"]):
-                    cnv["major_cn"] = int(record["mcn"])
+                if (
+                    record["tcn.em"] != "NA"
+                    and record["lcn.em"] != "NA"
+                    and record["cf.em"] != "NA"
+                    and str.isdigit(record["tcn.em"])
+                    and str.isdigit(record["lcn.em"])
+                    and str.isdigit(record["cf.em"].replace(".", "", 1))
+                ):
+                    cnv["cellular_prevalence"] = (
+                        float(record["cf.em"]) * self._cellularity
+                    )
                     cnv["minor_cn"] = int(record["lcn.em"])
+                    cnv["major_cn"] = int(record["tcn.em"]) - cnv["minor_cn"]
                     chrom = record["chrom"]
-                    cnv["start"] = int(record["gene_start"])
-                    cnv["end"] = int(float(record["gene_end"]))
+                    cnv["start"] = int(record["loc.start"])
+                    cnv["end"] = int(float(record["loc.end"]))
                     cn_regions[chrom].append(cnv)
                 else:
                     next
