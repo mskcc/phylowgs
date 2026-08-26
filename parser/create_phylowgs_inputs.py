@@ -323,6 +323,15 @@ class MafParser(MutectSmchetParser):
     def _parse_maf(self, maf_filename):
         variant_list = []
         with open(maf_filename) as maf_file:
+            # Skip leading metadata/comment lines.
+            while True:
+                pos = maf_file.tell()
+                line = maf_file.readline()
+
+                if not line.startswith("#"):
+                    maf_file.seek(pos)
+                    break
+            
             for single_line in csv.DictReader(maf_file, dialect="excel-tab"):
                 chrom = single_line["Chromosome"]
                 variant_type = single_line["Variant_Type"]
