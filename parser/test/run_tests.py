@@ -3,6 +3,7 @@ import tempfile
 import filecmp
 import os
 import shutil
+import sys
 
 def compare_outputs(comparison, parser_params=None):
   if parser_params is None:
@@ -89,7 +90,19 @@ def test_multisamp_cnvs():
   }
   compare_outputs(comparison)
 
+def test_facets_na_cellularity():
+  # cf.em is "NA" on some FACETS segments; calc_cellularity must skip them.
+  sys.path.insert(0, os.path.join('..'))
+  from parse_cnvs import FacetsParser
+  facets_path = os.path.join('inputs', 'facets_na', 'facets_na.cncf.txt')
+  parser = FacetsParser(facets_path, 1)
+  # Max cf.em < 1 is 0.7 (the 1.0 and NA rows are ignored).
+  if parser._cellularity != 0.7:
+    raise Exception('Expected cellularity 0.7, got %s' % parser._cellularity)
+  print('facets_na_cellularity passed')
+
 def main():
+  test_facets_na_cellularity()
   test_vcf_formats()
   test_singlesamp_cnv()
   test_multisamp_cnvs()
